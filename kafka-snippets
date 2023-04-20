@@ -1,12 +1,12 @@
 KafkaKafka1234!
 
 Link a cartella materiali:
-https://drive.google.com/drive/folders/1zhdZm1-68i8rMUiXDiCK5hjLQGQ6p
+https://drive.google.com/drive/folders/1zhdZm1-68i8rMUiXDiCK5hjLQGQ6pUs9?usp=sharing
 
 Disegni:
-https://drive.google.com/file/d/1K_Wnt_gVdLngtGIF2H7CG0dlbGctck
+https://drive.google.com/file/d/1K_Wnt_gVdLngtGIF2H7CG0dlbGctckb2/view?usp=sharing
 
-
+https://docs.google.com/document/d/1Dh7C7Zx2IWFsgylcJIhIvEDYVaxc8fH8WfcCfBLiXlI/edit?usp=sharing
 INSTALLAZIONE TOOLS
 sudo apt update
 sudo apt install openjdk-8-jdk
@@ -32,6 +32,8 @@ wget https://archive.apache.org/dist/kafka/3.1.0/kafka_2.12-3.1.0.tgz
 /home/azureuser/kafka_2.12-3.1.0/data/kafka1
 /home/azureuser/kafka_2.12-3.1.0/data/zookeeper
 
+/home/thimoty/kafka_2.12-3.1.0/data/kafka1
+cd /home/thimoty/kafka_2.12-3.1.0/data/zookeeper
  
 cd /home/azureuser/kafka_2.12-3.1.0/config
  nano zookeeper.properties
@@ -47,14 +49,14 @@ log.dirs=/home/azureuser/kafka_2.12-3.1.0/data/kafka1
   
   https://tmuxcheatsheet.com/
   
-cd /home/azureuser/kafka_2.12-3.1.0/  
+  bin/zookeeper-server-stop.sh config/zookeeper.properties
 
 tmux
 
 Ctrl-B Shift-2(")
 Ctrl-B (up/down)
 
-  
+  cd /home/azureuser/kafka_2.12-3.1.0/
   bin/zookeeper-server-start.sh config/zookeeper.properties
   bin/kafka-server-start.sh config/server.properties
     bin/kafka-server-start.sh config/server2.properties
@@ -75,7 +77,43 @@ Ctrl-B (up/down)
         bin/kafka-console-consumer.sh --topic quickstart-events-3 --from-beginning --bootstrap-server localhost:9092 --group group1
         
         bin/kafka-consumer-groups.sh --describe --group group1 --bootstrap-server localhost:9092
+        bin/kafka-console-consumer.sh --topic quickstart-events-3 --bootstrap-server localhost:9092 --group group1
         
+# Arresto dei server
+cd /home/azureuser/kafka_2.12-3.1.0/
+  bin/kafka-server-stop.sh config/server.properties
+    bin/kafka-server-stop.sh config/server2.properties
+      bin/kafka-server-stop.sh config/server3.properties
+       bin/zookeeper-server-stop.sh config/zookeeper.properties
+       
+sudo apt install net-tools
+netstat -tan
+
+
+=== CONFIGURE CLUSTER NODES
+cd /home/azureuser/kafka_2.12-3.1.0
+cd data
+mkdir kafka2
+mkdir kafka3
+cd ../config
+cp server.properties server2.properties
+cp server.properties server3.properties
+nano server2.properties
+
+broker.id=200
+listeners=PLAINTEXT://localhost:9093
+log.dirs=/home/azureuser/kafka_2.12-3.1.0/data/kafka2
+
+nano server3.properties
+
+broker.id=300
+listeners=PLAINTEXT://localhost:9094
+log.dirs=/home/azureuser/kafka_2.12-3.1.0/data/kafka3
+
+    bin/kafka-server-start.sh config/server2.properties
+      bin/kafka-server-start.sh config/server3.properties
+
+====
         
 bin/kafka-topics.sh --create --topic quickstart-events-3-rf3 --partitions 3 --replication-factor 3 --bootstrap-server localhost:9092
 bin/kafka-topics.sh --describe --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092
@@ -84,14 +122,14 @@ bin/kafka-topics.sh --create --topic quickstart-events-3-rf2 --partitions 3 --re
 bin/kafka-topics.sh --describe --topic quickstart-events-3-rf2 --bootstrap-server localhost:9092
 
 
-bin/kafka-console-producer.sh --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --broker-list localhost:9092,localhost:9093,localhost:9094 
+  bin/kafka-console-producer.sh --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --broker-list localhost:9092,localhost:9093,localhost:9094 
 
 bin/kafka-console-producer.sh --topic quickstart-events-3-rf2 --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --broker-list localhost:9092,localhost:9093,localhost:9094 
 
  bin/kafka-console-consumer.sh --topic quickstart-events-3-rf3 --from-beginning --bootstrap-server localhost:9092,localhost:9093,localhost:9094  --group group2
- 
+ bin/kafka-consumer-groups.sh --describe --group group2 --bootstrap-server localhost:9092
   bin/kafka-console-consumer.sh --topic quickstart-events-3-rf2 --from-beginning --bootstrap-server localhost:9092,localhost:9093,localhost:9094  --group group3
- 
+ bin/kafka-topics.sh --delete --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092
  DAY 2 - DOCKERIZATION
  
 sudo docker image ls
@@ -116,10 +154,9 @@ sudo docker image build -t linkextractor:step3 .
 sudo docker container run -d -p 5000:5000 --name=linkextractor linkextractor:step3
 
 git clone https://github.com/thimotyb/kafka-stack-docker-compose
-
-sudo docker-compose -f docker-compose.yml up
-
-git clone https://github.com/thimotyb/kafka-stack-docker-compose
+cd /home/azureuser/kafka-stack-docker-compose/
+nano zk-single-kafka-multiple.yml
+sudo docker-compose -f docker-compose.yml 
 cd kafka-stack-docker-compose/
 sudo docker-compose -f zk-single-kafka-multiple.yml up
 sudo docker-compose -f zk-single-kafka-multiple.yml ps
@@ -128,13 +165,16 @@ sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --list --z
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --create --topic test-topic --partitions 1 --replication-factor 1 --zookeeper kafka-stack-docker-compose_zoo1_1:2181
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --alter --partitions 3 --topic test-topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --describe --topic test-topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --describe --topic first_topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
 
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --create --topic first_topic --partitions 3 --replication-factor 1 --zookeeper kafka-stack-docker-compose_zoo1_1
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --alter --partitions 3 --topic first_topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
-
+sudo docker-compose -f zk-single-kafka-multiple.yml down
 
 DISTRIBUZIONE CONFLUENT
 https://docs.confluent.io/platform/current/platform-quickstart.html#step-1-download-and-start-cp
 
+cd /home/azureuser
 #wget https://packages.confluent.io/archive/6.0/confluent-community-6.0.6.tar.gz
 wget https://packages.confluent.io/archive/6.2/confluent-6.2.6.tar.gz
 tar xfz confluent-6.2.6.tar.gz
@@ -151,6 +191,7 @@ Package Archive:
  https://packages.confluent.io/archive/7.0/
  https://packages.confluent.io/archive/6.0/
 
+cd /home/azureuser
 wget https://packages.confluent.io/archive/6.0/confluent-6.0.6.tar.gz
 
 
@@ -158,10 +199,11 @@ PRODUCER E CONSUMER API
 
 Documentazione:
 https://kafka.apache.org/24/javadoc/overview-summary.html
-
+cd /home/azureuser
 git clone https://github.com/thimotyb/kafka-beginners-course
 sudo apt install mc
-
+mc
+#(Ctrl-o) switch mc on and off
 cd /home/azureuser/kafka-stack-docker-compose
 sudo docker-compose -f zk-single-kafka-single.yml up -d
 
@@ -173,16 +215,22 @@ java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerD
 java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ProducerDemoWithCallback
 
 java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemo
-java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ProducerDemoKeys
+  java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ProducerDemoKeys
 java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemoAssignSeek
-
+java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemoWithThread
 
 properties.setProperty(ProducerConfig.ACKS_CONFIG, "0");
+cd /home/azureuser/kafka-beginners-course/kafka-basics
 mvn clean package 
 
+sudo docker-compose -f zk-single-kafka-single.yml down
+
+===================================================================
 DAY 3 - AVRO SCHEMA, CONNECT AND STREAMS
+https://github.com/confluentinc/schema-registry
 https://docs.confluent.io/platform/6.2/quickstart/ce-quickstart.html#step-2-create-ak-topics
 
+tar xfz confluent-6.2.6.tar.gz
 export CONFLUENT_HOME=/home/azureuser/confluent-6.2.6
 export PATH=$PATH:$CONFLUENT_HOME/bin
 confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:latest
@@ -207,10 +255,12 @@ schema.registry.url=http://localhost:8081
 
 confluent local services start
 
+cd /home/azureuser
 git clone https://github.com/confluentinc/examples.git
 cd examples
 git checkout 6.0.6-post
 cd clients/avro
+mc
 mvn clean compile package 
 
 Workaround per problema pom versione 7:
@@ -233,7 +283,10 @@ curl --silent -X GET http://localhost:8081/schemas/ids/1 | jq .
 INSTALL KAFKA CONNECT
 
 === FILE STREAM
-cd kafka_2.12-3.1.0/
+cd /home/azureuser/kafka_2.12-3.1.0/
+
+nano config/connect-standalone.properties
+
 nano config/connect-file-source.properties
 
 file=/home/azureuser/test.txt
@@ -241,8 +294,9 @@ file=/home/azureuser/test.txt
 echo "ciao1" >> /home/azureuser/test.txt
 echo "ciao2" >> /home/azureuser/test.txt
 echo "ciao3" >> /home/azureuser/test.txt
+cat /home/azureuser/test.txt 
 
-nano kafka_2.12-3.1.0/config/connect-file-sink.properties
+nano /home/azureuser/kafka_2.12-3.1.0/config/connect-file-sink.properties
 file=/home/azureuser/test.sink.txt
 
 tmux
@@ -250,9 +304,16 @@ tmux
 bin/zookeeper-server-start.sh config/zookeeper.properties
 bin/kafka-server-start.sh config/server.properties
 
-  bin/connect-standalone.sh config/connect-standalone.properties config/connect-file-source.properties config/connect-file-sink.properties
+ bin/connect-standalone.sh config/connect-standalone.properties config/connect-file-source.properties config/connect-file-sink.properties
 
   bin/kafka-console-consumer.sh --topic connect-test --from-beginning --bootstrap-server localhost:9092
+
+cd /home/azureuser
+ls
+cat test.sink.txt
+echo "ciao4" >> /home/azureuser/test.txt
+echo "ciao5" >> /home/azureuser/test.txt
+cat test.sink.txt
 
 ==== TWITTER CONNECTOR
 
