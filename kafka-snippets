@@ -19,7 +19,7 @@ sudo apt-get install docker-compose
  
 wget https://archive.apache.org/dist/kafka/3.1.0/kafka_2.12-3.1.0.tgz
  
- tar xfz kafka_2.12-3.1.0.tgz
+
  
  cd kafka_2.12-3.1.0
  mkdir data
@@ -57,7 +57,7 @@ Ctrl-B Shift-2(")
 Ctrl-B (up/down)
 
   cd /home/azureuser/kafka_2.12-3.1.0/
-  bin/zookeeper-server-start.sh config/zookeeper.properties
+bin/zookeeper-server-start.sh config/zookeeper.properties
   bin/kafka-server-start.sh config/server.properties
     bin/kafka-server-start.sh config/server2.properties
       bin/kafka-server-start.sh config/server3.properties
@@ -110,10 +110,13 @@ broker.id=300
 listeners=PLAINTEXT://localhost:9094
 log.dirs=/home/azureuser/kafka_2.12-3.1.0/data/kafka3
 
-    bin/kafka-server-start.sh config/server2.properties
+  bin/zookeeper-server-start.sh config/zookeeper.properties
       bin/kafka-server-start.sh config/server3.properties
 
 ====
+
+bin/kafka-topics.sh --create --topic quickstart-events-3-rf1 --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092
+bin/kafka-topics.sh --describe --topic quickstart-events-3-rf1 --bootstrap-server localhost:9092
         
 bin/kafka-topics.sh --create --topic quickstart-events-3-rf3 --partitions 3 --replication-factor 3 --bootstrap-server localhost:9092
 bin/kafka-topics.sh --describe --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092
@@ -136,13 +139,16 @@ sudo docker image ls
 sudo docker container ls -a
  
 sudo docker container run -it alpine /bin/sh
+cat /etc/issue
 echo "ciao a tutti" >> hello.txt
+exit
 sudo docker container ls -a
-sudo docker container start 29e40
+sudo docker container start 29e40 # change this id with yours
 sudo docker exec -ti 29e40 /bin/sh
 cat hello.txt
 apk update
 apk add git
+exit
 sudo docker commit 29e40 thimoty/myhello
 sudo docker container run -ti thimoty/myhello /bin/sh
 
@@ -153,6 +159,9 @@ git checkout step3
 sudo docker image build -t linkextractor:step3 .
 sudo docker container run -d -p 5000:5000 --name=linkextractor linkextractor:step3
 
+curl localhost:5000
+curl localhost:5000/api/http://www.ilmeteo.it
+cd ..
 git clone https://github.com/thimotyb/kafka-stack-docker-compose
 cd /home/azureuser/kafka-stack-docker-compose/
 nano zk-single-kafka-multiple.yml
@@ -165,10 +174,10 @@ sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --list --z
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --create --topic test-topic --partitions 1 --replication-factor 1 --zookeeper kafka-stack-docker-compose_zoo1_1:2181
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --alter --partitions 3 --topic test-topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --describe --topic test-topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
-sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --describe --topic first_topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
 
 sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --create --topic first_topic --partitions 3 --replication-factor 1 --zookeeper kafka-stack-docker-compose_zoo1_1
-sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --alter --partitions 3 --topic first_topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --describe --topic first_topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+
 sudo docker-compose -f zk-single-kafka-multiple.yml down
 
 DISTRIBUZIONE CONFLUENT
@@ -205,7 +214,10 @@ sudo apt install mc
 mc
 #(Ctrl-o) switch mc on and off
 cd /home/azureuser/kafka-stack-docker-compose
-sudo docker-compose -f zk-single-kafka-single.yml up -d
+sudo docker-compose -f zk-single-kafka-multiple.yml up -d
+
+sudo apt install net-tools
+netstat -tan
 
 cd /home/azureuser/kafka-beginners-course/kafka-basics
 mvn clean package
@@ -222,8 +234,8 @@ java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerD
 properties.setProperty(ProducerConfig.ACKS_CONFIG, "0");
 cd /home/azureuser/kafka-beginners-course/kafka-basics
 mvn clean package 
-
-sudo docker-compose -f zk-single-kafka-single.yml down
+cd /home/azureuser/kafka-stack-docker-compose
+sudo docker-compose -f zk-single-kafka-multiple.yml down
 
 ===================================================================
 DAY 3 - AVRO SCHEMA, CONNECT AND STREAMS
@@ -256,11 +268,12 @@ schema.registry.url=http://localhost:8081
 confluent local services start
 
 cd /home/azureuser
-git clone https://github.com/confluentinc/examples.git
+git clone https://github.com/confluentinc/examples.gitls
 cd examples
 git checkout 6.0.6-post
 cd clients/avro
 mc
+cd /home/azureuser/examples/clients/avro
 mvn clean compile package 
 
 Workaround per problema pom versione 7:
@@ -268,8 +281,7 @@ git checkout 6.0.6-post
 
 mvn exec:java -Dexec.mainClass=io.confluent.examples.clients.basicavro.ProducerExample -Dexec.args="$HOME/.confluent/java.config"
 
-mvn exec:java -Dexec.mainClass=io.confluent.examples.clients.basicavro.ConsumerExample \
-  -Dexec.args="$HOME/.confluent/java.config"
+mvn exec:java -Dexec.mainClass=io.confluent.examples.clients.basicavro.ConsumerExample -Dexec.args="$HOME/.confluent/java.config"
 
 sudo apt install jq
 
@@ -279,6 +291,9 @@ curl --silent -X GET http://localhost:8081/subjects/transactions-value/versions/
 curl --silent -X GET http://localhost:8081/subjects/transactions-value/versions/latest | jq .schema
 curl --silent -X GET http://localhost:8081/schemas/ids/1 | jq .
 
+export CONFLUENT_HOME=/home/azureuser/confluent-6.2.6
+export PATH=$PATH:$CONFLUENT_HOME/bin
+confluent local services stop
 ========
 INSTALL KAFKA CONNECT
 
@@ -304,7 +319,7 @@ tmux
 bin/zookeeper-server-start.sh config/zookeeper.properties
 bin/kafka-server-start.sh config/server.properties
 
- bin/connect-standalone.sh config/connect-standalone.properties config/connect-file-source.properties config/connect-file-sink.properties
+ 
 
   bin/kafka-console-consumer.sh --topic connect-test --from-beginning --bootstrap-server localhost:9092
 
@@ -318,10 +333,14 @@ cat test.sink.txt
 ==== TWITTER CONNECTOR
 
 Copiare le librerie
-:~/kafka-beginners-course/kafka-connect/connectors/kafka-connect-twitter$ cp * /home/formazione1/kafka_2.12-3.1.0/libs/.
-a:~/kafka_2.12-3.1.0/config$ cp /home/formazione1/kafka-beginners-course/kafka-connect/twitter.properties .
+cd /home/azureuser/kafka-beginners-course/kafka-connect/connectors/kafka-connect-twitter
+cp * /home/azureuser/kafka_2.12-3.1.0/libs/.
+cp /home/azureuser/kafka-beginners-course/kafka-connect/twitter.properties /home/azureuser/kafka_2.12-3.1.0/config/.
 
 /home/thimoty/kafka_2.12-3.1.0/libs/twitter
+cd /home/azureuser/kafka_2.12-3.1.0/
+
+nano config/twitter.properties
 
 process.deletes=false 
 filter.keywords=bitcoin 
@@ -340,6 +359,7 @@ bin/kafka-topics.sh --create --topic connect-test --bootstrap-server localhost:9
 bin/connect-standalone.sh config/connect-standalone.properties config/connect-file-source.properties config/connect-file-sink.properties config/twitter.properties
 
  bin/kafka-console-consumer.sh --topic connect-test --from-beginning --bootstrap-server localhost:9092
+  bin/kafka-console-consumer.sh --topic twitter_status_connect --from-beginning --bootstrap-server localhost:9092
 
 ==============================
 KAFKA STREAMS
