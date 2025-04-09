@@ -1,0 +1,749 @@
+KafkaKafka1234!
+
+Link a cartella materiali:
+https://drive.google.com/drive/folders/1zhdZm1-68i8rMUiXDiCK5hjLQGQ6pUs9?usp=sharing
+https://drive.google.com/drive/folders/1zhdZm1-68i8rMUiXDiCK5hjLQGQ6pUs9?usp=sharing
+
+Disegni:
+https://drive.google.com/file/d/1K_Wnt_gVdLngtGIF2H7CG0dlbGctckb2/view?usp=sharing
+
+https://docs.google.com/document/d/1Dh7C7Zx2IWFsgylcJIhIvEDYVaxc8fH8WfcCfBLiXlI/edit?usp=sharing
+INSTALLAZIONE TOOLS
+sudo apt update
+sudo apt install openjdk-8-jdk
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
+echo "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/" >> .bashrc
+sudo apt install maven
+mvn -v
+sudo apt install docker.io
+sudo docker run hello-world
+sudo apt-get install docker-compose
+
+curl -s "https://get.sdkman.io" | bash
+source "/home/Student/.sdkman/bin/sdkman-init.sh"
+sdk install java 8.0.402-tem
+java -version
+
+ https://kafka.apache.org/downloads
+wget https://archive.apache.org/dist/kafka/3.1.0/kafka_2.12-3.1.0.tgz
+tar -xvf kafka_2.12-3.1.0.tgz 
+
+ 
+ cd kafka_2.12-3.1.0
+ mkdir data
+ cd data
+
+ mkdir kafka1
+ mkdir zookeeper
+ pwd
+ 
+ 
+/home/Student/kafka_2.12-3.1.0/data/kafka1 
+/home/Student/kafka_2.12-3.1.0/data/zookeeper
+
+/home/azureuser/kafka_2.12-3.1.0/data/kafka1
+/home/azureuser/kafka_2.12-3.1.0/data/zookeeper
+
+/home/thimoty/kafka_2.12-3.1.0/data/kafka1
+cd /home/thimoty/kafka_2.12-3.1.0/data/zookeeper
+ 
+
+ nano zookeeper.properties
+  
+  dataDir=/home/Student/kafka_2.12-3.1.0/data/zookeeper
+  
+  nano server.properties
+  
+# The id of the broker. This must be set to a unique integer for each broker.
+broker.id=100
+listeners=PLAINTEXT://localhost:9092
+log.dirs=/home/Student/kafka_2.12-3.1.0/data/kafka1
+  
+  https://tmuxcheatsheet.com/
+  
+  bin/zookeeper-server-stop.sh config/zookeeper.properties
+
+tmux
+
+Ctrl-B Shift-2(")
+Ctrl-B (up/down)
+
+  cd /home/azureuser/kafka_2.12-3.1.0/
+bin/zookeeper-server-start.sh config/zookeeper.properties
+  bin/kafka-server-start.sh config/server.properties
+    bin/kafka-server-start.sh config/server2.properties
+      bin/kafka-server-start.sh config/server3.properties
+  
+   bin/kafka-topics.sh --create --topic quickstart-events --bootstrap-server localhost:9092
+   bin/kafka-topics.sh --describe --topic quickstart-events --bootstrap-server localhost:9092
+   bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+   bin/kafka-console-producer.sh --topic quickstart-events --bootstrap-server localhost:9092
+   bin/kafka-console-consumer.sh --topic quickstart-events --from-beginning --bootstrap-server localhost:9092
+   
+   bin/kafka-topics.sh --create --topic quickstart-events-3 --partitions 3 --bootstrap-server localhost:9092
+   bin/kafka-topics.sh --describe --topic quickstart-events-3 --bootstrap-server localhost:9092
+   
+    bin/kafka-console-producer.sh --topic quickstart-events-3 --bootstrap-server localhost:9092
+    bin/kafka-console-consumer.sh --topic quickstart-events-3 --from-beginning --bootstrap-server localhost:9092
+    
+        bin/kafka-console-consumer.sh --topic quickstart-events-3 --from-beginning --bootstrap-server localhost:9092 --group group1
+        
+        bin/kafka-consumer-groups.sh --describe --group group1 --bootstrap-server localhost:9092
+        bin/kafka-console-consumer.sh --topic quickstart-events-3 --bootstrap-server localhost:9092 --group group1
+        
+# Arresto dei server
+cd /home/azureuser/kafka_2.12-3.1.0/
+  bin/kafka-server-stop.sh config/server.properties
+    bin/kafka-server-stop.sh config/server2.properties
+      bin/kafka-server-stop.sh config/server3.properties
+       bin/zookeeper-server-stop.sh config/zookeeper.properties
+       
+sudo apt install net-tools
+netstat -tan
+
+
+
+=== CONFIGURE CLUSTER NODES
+cd /home/azureuser/kafka_2.12-3.1.0
+cd data
+mkdir kafka2
+mkdir kafka3
+cd ../config
+cp server.properties server2.properties
+cp server.properties server3.properties
+nano server2.properties
+
+broker.id=200
+listeners=PLAINTEXT://localhost:9093
+log.dirs=/home/azureuser/kafka_2.12-3.1.0/data/kafka2
+
+nano server3.properties
+
+broker.id=300
+listeners=PLAINTEXT://localhost:9094
+log.dirs=/home/azureuser/kafka_2.12-3.1.0/data/kafka3
+
+  bin/zookeeper-server-start.sh config/zookeeper.properties
+      bin/kafka-server-start.sh config/server3.properties
+
+====
+
+bin/kafka-topics.sh --create --topic quickstart-events-3-rf1 --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092
+bin/kafka-topics.sh --describe --topic quickstart-events-3-rf1 --bootstrap-server localhost:9092
+        
+bin/kafka-topics.sh --create --topic quickstart-events-3-rf3 --partitions 3 --replication-factor 3 --bootstrap-server localhost:9092
+bin/kafka-topics.sh --describe --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092
+
+bin/kafka-topics.sh --create --topic quickstart-events-3-rf2 --partitions 3 --replication-factor 2 --bootstrap-server localhost:9092
+bin/kafka-topics.sh --describe --topic quickstart-events-3-rf2 --bootstrap-server localhost:9092
+
+
+  bin/kafka-console-producer.sh --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --broker-list localhost:9092,localhost:9093,localhost:9094 
+
+bin/kafka-console-producer.sh --topic quickstart-events-3-rf2 --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --broker-list localhost:9092,localhost:9093,localhost:9094 
+
+ bin/kafka-console-consumer.sh --topic quickstart-events-3-rf3 --from-beginning --bootstrap-server localhost:9092,localhost:9093,localhost:9094  --group group2
+ bin/kafka-consumer-groups.sh --describe --group group2 --bootstrap-server localhost:9092
+  bin/kafka-console-consumer.sh --topic quickstart-events-3-rf2 --from-beginning --bootstrap-server localhost:9092,localhost:9093,localhost:9094  --group group4
+ bin/kafka-topics.sh --delete --topic quickstart-events-3-rf3 --bootstrap-server localhost:9092
+ DAY 2 - DOCKERIZATION
+ 
+sudo docker image ls
+sudo docker container ls -a
+ 
+sudo docker container run -it alpine /bin/sh
+cat /etc/issue
+echo "ciao a tutti" >> hello.txt
+exit
+sudo docker container ls -as
+sudo docker container start 29e40 # change this id with yours
+sudo docker exec -ti 29e40 /bin/sh
+cat hello.txt
+apk update
+apk add git
+exit
+sudo docker commit 29e40 thimoty/myhello
+sudo docker container run -ti thimoty/myhello /bin/sh
+
+  git clone https://github.com/ibnesayeed/linkextractor.git
+cd linkextractor
+git checkout demo
+git checkout step3
+sudo docker image build -t linkextractor:step3 .
+sudo docker container run -d -p 5000:5000 --name=linkextractor linkextractor:step3
+
+curl localhost:5000
+curl localhost:5000/api/http://www.ilmeteo.it
+cd ..
+git clone https://github.com/thimotyb/kafka-stack-docker-compose
+cd /home/azureuser/kafka-stack-docker-compose/
+nano zk-single-kafka-multiple.yml
+sudo docker-compose -f docker-compose.yml 
+cd kafka-stack-docker-compose/
+sudo docker-compose -f zk-single-kafka-multiple.yml up
+sudo docker-compose -f zk-single-kafka-multiple.yml ps
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --help
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --list --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --create --topic test-topic --partitions 1 --replication-factor 1 --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --alter --partitions 3 --topic test-topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --describe --topic test-topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --create --topic first_topic --partitions 3 --replication-factor 1 --zookeeper kafka-stack-docker-compose_zoo1_1
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --describe --topic first_topic --zookeeper kafka-stack-docker-compose_zoo1_1:2181
+sudo docker exec -it kafka-stack-docker-compose_kafka1_1 kafka-topics --delete --topic first_topic --zookeeper kafka-stack-docker-compose_zoo1_1
+
+
+sudo docker-compose -f zk-single-kafka-multiple.yml down
+
+DISTRIBUZIONE CONFLUENT
+https://docs.confluent.io/platform/current/platform-quickstart.html#step-1-download-and-start-cp
+
+cd /home/azureuser
+#wget https://packages.confluent.io/archive/6.0/confluent-community-6.0.6.tar.gz
+wget https://packages.confluent.io/archive/6.2/confluent-6.2.6.tar.gz
+tar xfz confluent-6.2.6.tar.gz
+
+Confluent GitHub: https://github.com/confluentinc/cp-all-in-one
+mkdir confluent-docker-compose
+cd confluent-docker-compose
+curl --silent --output docker-compose.yml https://raw.githubusercontent.com/confluentinc/cp-all-in-one/6.2.8-post/cp-all-in-one/docker-compose.yml
+
+docker-compose up -d
+# Put version: '2.4' if error client version too old at top of docker-compose.yml
+docker-compose down
+docker-compose rm
+
+OPPURE IN LOCALE:
+  
+Package Archive:
+ https://packages.confluent.io/archive/7.0/
+ https://packages.confluent.io/archive/6.0/
+
+cd /home/azureuser
+wget https://packages.confluent.io/archive/6.0/confluent-6.0.6.tar.gz
+
+
+PRODUCER E CONSUMER API
+
+Documentazione:
+https://kafka.apache.org/24/javadoc/overview-summary.html
+cd /home/azureuser
+git clone https://github.com/thimotyb/kafka-beginners-course
+sudo apt install mc
+mc
+#(Ctrl-o) switch mc on and off
+cd /home/azureuser/kafka-stack-docker-compose
+sudo docker-compose -f zk-single-kafka-multiple.yml up -d
+
+sudo apt install net-tools
+netstat -tan
+
+cd /home/azureuser/kafka-beginners-course/kafka-basics
+mvn clean package
+java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ProducerDemo
+java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemo
+
+java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ProducerDemoWithCallback
+
+java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemo
+  java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ProducerDemoKeys
+java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemoAssignSeek
+java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemoWithThread
+
+properties.setProperty(ProducerConfig.ACKS_CONFIG, "0");
+cd /home/azureuser/kafka-beginners-course/kafka-basics
+mvn clean package 
+cd /home/azureuser/kafka-stack-docker-compose
+sudo docker-compose -f zk-single-kafka-multiple.yml down
+
+===================================================================
+DAY 3 - AVRO SCHEMA, CONNECT AND STREAMS
+https://github.com/confluentinc/schema-registry
+https://docs.confluent.io/platform/6.2/quickstart/ce-quickstart.html#step-2-create-ak-topics
+
+tar xfz confluent-6.2.6.tar.gz
+export CONFLUENT_HOME=/home/azureuser/confluent-6.2.6
+export PATH=$PATH:$CONFLUENT_HOME/bin
+confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:latest
+ls /home/azureuser/confluent-6.2.6/share/confluent-hub-components 
+
+https://www.confluent.io/hub/confluentinc/kafka-connect-jdbc
+https://docs.confluent.io/kafka-connectors/jdbc/current/source-connector/overview.html
+
+CREAZIONE IN HOME FOLDER:
+cd /home/azureuser
+mkdir .confluent
+cd .confluent
+touch java.config
+nano java.config
+
+=======
+# Kafka
+bootstrap.servers=localhost:9092
+
+# Confluent Schema Registry
+schema.registry.url=http://localhost:8081
+==================
+
+confluent local services start
+
+cd /home/azureuser
+git clone https://github.com/confluentinc/examples.git
+cd examples
+git checkout 6.0.6-post
+cd clients/avro
+mc
+cd /home/azureuser/examples/clients/avro
+mvn clean compile package 
+
+Workaround per problema pom versione 7:
+git checkout 6.0.6-post
+
+mvn exec:java -Dexec.mainClass=io.confluent.examples.clients.basicavro.ProducerExample -Dexec.args="$HOME/.confluent/java.config"
+
+mvn exec:java -Dexec.mainClass=io.confluent.examples.clients.basicavro.ConsumerExample -Dexec.args="$HOME/.confluent/java.config"
+
+sudo apt install jq
+
+INTERAZIONE CON LA API DELLO SCHEMA REGISTRY
+curl --silent -X GET http://localhost:8081/subjects/ | jq .
+curl --silent -X GET http://localhost:8081/subjects/transactions-value/versions/latest | jq .
+curl --silent -X GET http://localhost:8081/subjects/transactions-value/versions/latest | jq .schema
+curl --silent -X GET http://localhost:8081/subjects/transactions-value/versions/latest | jq -r .schema > Payment.avsc
+curl --silent -X GET http://localhost:8081/schemas/ids/1 | jq .
+
+export CONFLUENT_HOME=/home/azureuser/confluent-6.2.6
+export PATH=$PATH:$CONFLUENT_HOME/bin
+confluent local services stop
+========
+INSTALL KAFKA CONNECT
+
+=== FILE STREAM
+cd /home/azureuser/kafka_2.12-3.1.0/
+
+nano config/connect-standalone.properties
+
+nano config/connect-file-source.properties
+
+file=/home/azureuser/test.txt
+
+echo "ciao1" >> /home/azureuser/test.txt
+echo "ciao2" >> /home/azureuser/test.txt
+echo "ciao3" >> /home/azureuser/test.txt
+cat /home/azureuser/test.txt 
+
+nano /home/azureuser/kafka_2.12-3.1.0/config/connect-file-sink.properties
+file=/home/azureuser/test.sink.txt
+
+tmux
+
+bin/zookeeper-server-start.sh config/zookeeper.properties
+bin/kafka-server-start.sh config/server.properties
+bin/connect-standalone.sh config/connect-standalone.properties config/connect-file-source.properties config/connect-file-sink.properties
+
+bin/kafka-console-consumer.sh --topic connect-test --from-beginning --bootstrap-server localhost:9092
+
+cd /home/azureuser
+ls
+cat test.sink.txt
+echo "ciao4" >> /home/azureuser/test.txt
+echo "ciao5" >> /home/azureuser/test.txt
+cat test.sink.txt
+
+==== TWITTER CONNECTOR
+
+Copiare le librerie
+cd /home/azureuser/kafka-beginners-course/kafka-connect/connectors/kafka-connect-twitter
+cp * /home/azureuser/kafka_2.12-3.1.0/libs/.
+cp /home/azureuser/kafka-beginners-course/kafka-connect/twitter.properties /home/azureuser/kafka_2.12-3.1.0/config/.
+
+/home/thimoty/kafka_2.12-3.1.0/libs/twitterc
+cd /home/azureuser/kafka_2.12-3.1.0/
+
+nano config/twitter.properties
+
+process.deletes=false 
+filter.keywords=bitcoin 
+kafka.status.topic=twitter_status_connect 
+kafka.delete.topic=twitter_deletes_connect 
+# put your own credentials here - don't share with anyone 
+twitter.oauth.consumerKey=zrp9eKkJmJD6zFXjBChJdX665 
+twitter.oauth.consumerSecret=RDTVJ4i3SHIZIfCRnyvIgLBT1IQ5JcdkiWSvvxQrMiiialYlJY 
+twitter.oauth.accessToken=97623366-2FchQvGqapNzDKUscfi7lQwMejW1HobZkhJ1SlFLD 
+twitter.oauth.accessTokenSecret=FU3VdjXq9cfe8MdDxwFMkFTnTQ2Dl6179hW8Ixk1i5uq7 
+
+
+bin/kafka-topics.sh --create --topic twitter_status_connect --bootstrap-server localhost:9092
+bin/kafka-topics.sh --create --topic twitter_deletes_connect --bootstrap-server localhost:9092
+bin/kafka-topics.sh --create --topic connect-test --bootstrap-server localhost:9092
+bin/connect-standalone.sh config/connect-standalone.properties config/connect-file-source.properties config/connect-file-sink.properties config/twitter.properties
+
+ bin/kafka-console-consumer.sh --topic connect-test --from-beginning --bootstrap-server localhost:9092
+  bin/kafka-console-consumer.sh --topic twitter_status_connect --from-beginning --bootstrap-server localhost:9092
+
+==============================
+KAFKA STREAMS
+
+https://kafka.apache.org/21/documentation/streams/quickstart
+
+bin/zookeeper-server-start.sh config/zookeeper.properties
+  bin/kafka-server-start.sh config/server.properties
+
+
+bin/kafka-topics.sh --create --topic streams-plaintext-input --bootstrap-server localhost:9092
+bin/kafka-topics.sh --create --topic streams-wordcount-output --bootstrap-server localhost:9092 --config cleanup.policy=compact
+
+bin/kafka-run-class.sh org.apache.kafka.streams.examples.wordcount.WordCountDemo
+
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic streams-plaintext-input
+
+
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 \
+    --topic streams-wordcount-output \
+    --from-beginning \
+    --formatter kafka.tools.DefaultMessageFormatter \
+    --property print.key=true \
+    --property print.value=true \
+    --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer \
+    --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
+    
+KSQLDB
+======
+
+https://ksqldb.io/quickstart-standalone-rpm.html#quickstart-content
+https://docs.confluent.io/cloud/current/get-started/index.html
+
+# create users topic
+# create pageviews topic
+# create datagen connector topic=users, quickstart=users
+# create datagen connector topic=pageviews, quickstart=pageviews
+
+CREATE STREAM pageviews_stream
+  WITH (KAFKA_TOPIC='pageviews', VALUE_FORMAT='AVRO');
+
+SELECT * FROM pageviews_stream EMIT CHANGES;
+
+CREATE TABLE users_table (id VARCHAR PRIMARY KEY)
+  WITH (KAFKA_TOPIC='users', VALUE_FORMAT='AVRO');
+  
+CREATE STREAM user_pageviews
+  AS SELECT users_table.id AS userid, pageid, regionid, gender
+    FROM pageviews_stream
+    LEFT JOIN users_table ON pageviews_stream.userid = users_table.id
+EMIT CHANGES;
+
+SPRING CLOUD STREAM
+===================
+
+Spring Kafka Template: https://www.baeldung.com/spring-kafka
+
+confluent local services stop
+cd /home/azureuser
+git clone https://github.com/thimotyb/spmia-chapter8
+cd spmia-chapter8
+mc
+sudo mvn clean package docker:build
+cd docker/common
+sudo docker-compose -f docker-compose.yml up
+
+# get location from organization
+curl --location 'http://localhost:5555/api/organization/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/' | jq .
+# licenses (uses organization)
+curl --location 'http://localhost:5555/api/licensing/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a' | jq .
+# Put new data in organization (saga message fired on Kafka, cache evicts on redis)
+curl --location --request PUT 'http://localhost:5555/api/organization/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "id": "e254f8c-c442-4ebe-a82a-e2fc1d1ff78a",
+    "name": "customer-crm-co",
+    "contactName": "Mark Balster TIMO PROVA",
+    "contactEmail": "mark.balster@custcrmco.com",
+    "contactPhone": "823-555-1212"
+}'
+# Re-read licenses
+curl --location 'http://localhost:5555/api/licensing/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a' | jq .
+
+
+STRIMZI
+=======
+(killercoda)
+
+https://strimzi.io/quickstarts/
+
+curl https://strimzi.io/install/latest?namespace=kafka >> strimzi_install.yaml
+
+kubectl create ns kafka
+kubectl create -f strimzi_install.yaml -n kafka
+
+wget https://strimzi.io/examples/latest/kafka/kafka-persistent-single.yaml
+
+kubectl apply -f https://strimzi.io/examples/latest/kafka/kafka-persistent-single.yaml -n kafka 
+kubectl wait kafka/my-cluster --for=condition=Ready --timeout=300s -n kafka 
+
+kubectl -n kafka run kafka-producer -ti --image=quay.io/strimzi/kafka:0.32.0-kafka-3.3.1 --rm=true --restart=Never -- bin/kafka-console-producer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic my-topic
+
+kubectl -n kafka run kafka-consumer -ti --image=quay.io/strimzi/kafka:0.32.0-kafka-3.3.1 --rm=true --restart=Never -- bin/kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic my-topic --from-beginning
+
+STRIMZI NODE POOLS: https://strimzi.io/blog/2023/08/14/kafka-node-pools-introduction/
+
+
+==========
+KRAFT
+=======
+cd /home/azureuser/kafka-stack-docker-compose
+docker-compose -f kraft-multiple.yml up
+
+# connect on port 8080
+
+docker exec ti broker /bin/bash
+docker exec broker /opt/kafka/bin/kafka-topics.sh   --topic orders   --create   --bootstrap-server broker:9092   --partitions 3   --replication-factor 1
+docker exec -ti broker /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server broker:9092 --topic orders
+# put some orders and use UI to look at them in broker
+# bring down one node
+docker ps
+docker stop broker3
+docker exec broker /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server broker:9092 --topic orders --from-beginning
+
+================
+KERBEROS DEMO (killercodaubuntu playground as root)
+https://documentation.ubuntu.com/server/how-to/kerberos/install-a-kerberos-server/index.html
+================
+echo "127.0.0.1 example.com" >> /etc/hosts
+cat /etc/hosts
+sudo apt update
+sudo apt install krb5-kdc krb5-admin-server
+>> EXAMPLE.COM
+sudo krb5_newrealm
+sudo kadmin.local
+addprinc ubuntu
+<password>
+quit
+sudo kadmin.local
+addprinc ubuntu/admin
+quit
+
+nano /etc/krb5.conf
+############
+[logging]
+  default = FILE:/var/log/krb5libs.log
+  kdc = FILE:/var/log/krb5kdc.log
+  admin_server = FILE:/var/log/kadmind.log
+
+[libdefaults]
+    default_realm = EXAMPLE.COM
+    kdc_timesync = 1
+    ticket_lifetime = 24h
+
+[realms]
+    EXAMPLE.COM = {
+      admin_server = example.com
+      kdc  = example.com
+     }
+##################
+
+nano /etc/krb5kdc/kadm5.acl
+*/admin@EXAMPLE.COM        *
+
+sudo systemctl restart krb5-admin-server.service
+
+kinit ubuntu/admin
+
+klist
+
+###########
+# Ticket cache: FILE:/tmp/krb5cc_0
+Default principal: ubuntu/admin@EXAMPLE.COM
+
+Valid starting     Expires            Service principal
+02/26/25 17:23:09  02/27/25 03:23:09  krbtgt/EXAMPLE.COM@EXAMPLE.COM
+        renew until 02/27/25 17:23:05
+#######################
+
+## CREATING KEYTABS
+## https://documentation.ubuntu.com/server/how-to/kerberos/configure-service-principals/
+
+sudo kadmin -p ubuntu/admin
+addprinc -randkey ldap/ldap-server.example.com
+ktadd ldap/ldap-server.example.com
+quit
+
+sudo klist -k
+
+# Extract keytabs to move them 
+ other host for authentication
+sudo kadmin -p ubuntu/admin
+ktadd -k /home/ubuntu/ldap.keytab ldap/ldap-server.example.com
+
+================
+FLINK
+================
+apt install zip
+curl -s "https://get.sdkman.io" | bash
+source "/home/Student/.sdkman/bin/sdkman-init.sh"
+sdk install java 8.0.402-tem
+java -version
+apt install maven
+mvn -v
+
+git clone https://github.com/thimotyb/flink-training
+cd flink-training/
+./gradlew test shadowJar
+cd ride-cleansing/
+# Complete Solution of Filtering Method (look at solution package, also change necessary imports from common package)
+cd ..
+./gradlew printRunTasks
+./gradlew :ride-cleansing:runJavaSolution
+
+#### KEYED STATE EXAMPLE
+./gradlew :rides-and-fares:runJavaSolution
+
+
+===============
+FLINK TUTORIAL (needs Java 11)
+===============
+# https://nightlies.apache.org/flink/flink-docs-stable/docs/try-flink/local_installation/
+
+wget https://dlcdn.apache.org/flink/flink-1.20.1/flink-1.20.1-bin-scala_2.12.tgz
+tar xfz flink-1.20.1-bin-scala_2.12.tgz
+cd flink-1.20.1/
+./bin/start-cluster.sh
+#Open in port 8081 to see flink dashboard
+./bin/flink run examples/streaming/WordCount.jar 
+tail log/flink-*-taskexecutor-*.out
+# Source: https://github.com/apache/flink/blob/master/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/wordcount/WordCount.java
+./bin/stop-cluster.sh
+
+# Windowing Tutorial (Java 8?)
+
+# Needs old version of Flink
+# https://flink.apache.org/downloads/
+wget https://archive.apache.org/dist/flink/flink-1.9.0/flink-1.9.0-bin-scala_2.11.tgz
+tar xfz flink-1.9.0-bin-scala_2.11.tgz
+
+git clone https://github.com/thimotyb/flink-tutorials.git
+cd flink-tutorials
+mvn clean install -DskipTests
+cd target
+jar cvf tutorials.jar -C ./classes .
+jar --list -f tutorials.jar
+cd ../../flink-1.9.0
+./bin/start-cluster.sh
+./bin/flink run -c org.pd.streaming.window.example.TumblingWindowExample ../flink-tutorials/target/tutorials.jar
+#Open in port 8081 to see flink dashboard
+./bin/flink list
+############
+------------------ Running/Restarting Jobs -------------------
+01.03.2025 14:14:55 : bae1e26ad9fbe52f0c4acf444db728ad : Flink Streaming Job (RUNNING)
+--------------------------------------------------------------
+################à
+./bin/flink cancel bae1e26ad9fbe52f0c4acf444db728ad
+./bin/stop-cluster.sh
+
+=======================
+FLINK OPERATIONS PLAYGROUND WITH KAFKA DEMO
+https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/try-flink/flink-operations-playground/
+========================
+git clone https://github.com/thimotyb/flink-playgrounds.git
+cd flink-playgrounds/operations-playground
+docker-compose build
+docker-compose up -d
+docker-compose ps
+# Tailing log
+docker-compose logs -f jobmanager
+docker-compose logs -f taskmanager
+# Running the flink CLI from the client container
+docker-compose run --no-deps client flink --help
+docker-compose run --no-deps client flink list
+# Inspecting Flink Jobs
+curl localhost:8081/jobs | jq
+# Inspecting Kafka topics
+# Open these two consumers side-by-side in different windows (input produces stream, output get 15-sec window summarization)
+//input topic (1000 records/s)
+docker-compose exec kafka kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 --topic input
+//output topic (24 records/min)
+docker-compose exec kafka kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 --topic output
+# Introduce a fault by killing a worker
+docker-compose kill taskmanager
+# Notice in UI Dashboard Flink is trying to Reschedule
+# Restart task manager, In the output you will see that all keys (pages) are present for all time windows and that every count is exactly one thousand
+docker-compose up -d taskmanager
+# Procedure for Upgrade and Rescale a Job
+docker-compose run --no-deps client flink list
+docker-compose run --no-deps client flink stop <job id>
+# Suspending job "4ed65605362417cf8c08426f5755d536" with a CANONICAL savepoint.
+# Savepoint completed. Path: file:/tmp/flink-savepoints-directory/savepoint-4ed656-30e0d0007cdb
+# Restart using a savepoint (replace savepoint path)
+docker-compose run --no-deps client flink run -s file:/tmp/flink-savepoints-directory/savepoint-4ed656-30e0d0007cdb \
+  -d /opt/ClickCountJob.jar \
+  --bootstrap.servers kafka:9092 --checkpointing --event-time
+# Restart with different parallelism
+docker-compose run --no-deps client flink list
+docker-compose run --no-deps client flink stop <job id>
+docker-compose run --no-deps client flink run -p 3 -s file:/tmp/flink-savepoints-directory/savepoint-fd6196-c062a2e38250 \
+  -d /opt/ClickCountJob.jar \
+  --bootstrap.servers kafka:9092 --checkpointing --event-time
+docker-compose scale taskmanager=2 # Add a taskmanager to host this parallelism
+# Get job info
+curl localhost:8081/jobs/<jod-id> | jq
+
+================
+FLINK SQL DEMO
+https://flink.apache.org/2020/07/28/flink-sql-demo-building-an-end-to-end-streaming-application/
+================
+git clone https://github.com/thimotyb/flink-sql-demo.git
+cd flink-sql-demo/
+docker-compose up -d
+# Kibana is on http://localhost:5601/
+# Flink SQL Client
+docker-compose exec sql-client ./sql-client.sh
+# Examine inbound messages in other shell
+docker-compose exec kafka bash -c 'kafka-console-consumer.sh --topic user_behavior --bootstrap-server kafka:9094 --from-beginning --max-messages 10'
+# IN Flink SQL Prompt
+CREATE TABLE user_behavior (
+    user_id BIGINT,
+    item_id BIGINT,
+    category_id BIGINT,
+    behavior STRING,
+    ts TIMESTAMP(3),
+    proctime AS PROCTIME(),   -- generates processing-time attribute using computed column
+    WATERMARK FOR ts AS ts - INTERVAL '5' SECOND  -- defines watermark on ts column, marks ts as event-time attribute
+) WITH (
+    'connector' = 'kafka',  -- using kafka connector
+    'topic' = 'user_behavior',  -- kafka topic
+    'scan.startup.mode' = 'earliest-offset',  -- reading from the beginning
+    'properties.bootstrap.servers' = 'kafka:9094',  -- kafka broker address
+    'format' = 'json'  -- the data format is json
+);
+##########################
+# Create Elasticsearch table
+#####################
+CREATE TABLE buy_cnt_per_hour (
+    hour_of_day BIGINT,
+    buy_cnt BIGINT
+) WITH (
+    'connector' = 'elasticsearch-7', -- using elasticsearch connector
+    'hosts' = 'http://elasticsearch:9200',  -- elasticsearch address
+    'index' = 'buy_cnt_per_hour'  -- elasticsearch index name, similar to database table name
+);
+#####################
+INSERT INTO buy_cnt_per_hour
+SELECT HOUR(TUMBLE_START(ts, INTERVAL '1' HOUR)), COUNT(*)
+FROM user_behavior
+WHERE behavior = 'buy'
+GROUP BY TUMBLE(ts, INTERVAL '1' HOUR);
+####################à
+# Access Kibana at http://localhost:5601. First, configure an index pattern by clicking “Management” in the left-side toolbar and find “Index Patterns”. Next, click “Create Index # Pattern” and enter the full index name buy_cnt_per_hour to create the index pattern
+# Click “Dashboard” on the left side of the page to create a dashboard named “User Behavior Analysis”. Then, click “Create New” to create a new view. Select “Area” (area graph), then select the buy_cnt_per_hour index, and draw the trading volume area chart as illustrated in the configuration on the left side of the following diagram. Apply the changes by clicking the “▶” play button. Then, save it as “Hourly Trading Volume”. X AXIS: MAX buy_cnt, Bucketsx X AXIS Aggregation Terms field hour of day ORder by Alphabetical desc size 24
+##################à
+
+REMOVE ALL CONTAINERS:
+docker rm -v -f $(docker ps -qa)
+
+REMOVE ALL IMAGES:
+docker image rm $(docker image ls -qa)
+
+
+
+        
