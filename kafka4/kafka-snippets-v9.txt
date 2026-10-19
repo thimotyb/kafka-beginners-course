@@ -760,6 +760,25 @@ File di supporto nella cartella kafka4/ del repo:
 #######################################################################
 #######################################################################
 
+=== PREREQUISITO: DOCKER COMPOSE PLUGIN ("docker compose", con lo spazio)
+# Gli esempi di questa appendice usano il Compose v2 ("docker compose"), non il vecchio "docker-compose" (v1, es. 1.25.0).
+# I due convivono: il v1 resta disponibile per i compose della parte vecchia del corso.
+# Requisito: Docker Engine >= 20.10 (verificare con: docker version; con 24.0.7 va bene)
+docker version --format '{{.Server.Version}}'
+docker-compose --version        # v1: resta dov'e'
+# Installazione del plugin per il solo utente corrente (non tocca il v1)
+mkdir -p ~/.docker/cli-plugins
+curl -SL https://github.com/docker/compose/releases/download/v2.40.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+chmod +x ~/.docker/cli-plugins/docker-compose
+docker compose version
+# (macchina ARM: sostituire x86_64 con aarch64; senza internet: scaricare il file altrove e copiarlo con scp)
+# Installazione per tutti gli utenti (necessaria se si usa "sudo docker compose", che cerca il plugin tra quelli di root)
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -SL https://github.com/docker/compose/releases/download/v2.40.3/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+sudo docker compose version
+# NOTA: i file docker-compose-kraft-*.yml di kafka4/ sono per il Compose v2; con il v1 1.25 mancherebbe la riga "version:".
+
 === NOVITA' KAFKA 4 IN BREVE
 - ZooKeeper rimosso: solo KRaft. Niente zookeeper-server-start.sh / zookeeper.properties
 - Java: client e Streams richiedono Java 11, broker/Connect/tool Java 17 (Java 8 non supportato)
