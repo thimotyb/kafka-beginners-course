@@ -1,3 +1,6 @@
+# Usare Docker senza sudo (una volta sola per utente)
+sudo usermod -aG docker $USER && newgrp docker
+
 KafkaKafka1234!
 
 Link a cartella materiali:
@@ -759,6 +762,10 @@ File di supporto nella cartella kafka4/ del repo:
   kafka-streams-filter-tweets/      (Streams 4.1.0)
 #######################################################################
 #######################################################################
+
+=== USARE DOCKER SENZA SUDO (una volta sola per utente)
+sudo usermod -aG docker $USER && newgrp docker
+# newgrp vale solo per la shell corrente: per le altre sessioni fare logout/login. Poi si puo' togliere "sudo" dai comandi docker.
 
 === PREREQUISITO: DOCKER COMPOSE PLUGIN ("docker compose", con lo spazio)
 # Gli esempi di questa appendice usano il Compose v2 ("docker compose"), non il vecchio "docker-compose" (v1, es. 1.25.0).
