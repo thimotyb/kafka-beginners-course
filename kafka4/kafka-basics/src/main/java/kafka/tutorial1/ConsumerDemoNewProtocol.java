@@ -35,6 +35,7 @@ public class ConsumerDemoNewProtocol {
         // la novita' di Kafka 4
         properties.setProperty(ConsumerConfig.GROUP_PROTOCOL_CONFIG, "consumer");
 
+        // il resto del codice e' identico a ConsumerDemo: cambia solo chi decide l'assegnazione delle partizioni (il broker)
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
         consumer.subscribe(Arrays.asList(topic));
 

@@ -948,3 +948,61 @@ sudo docker exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-serv
 - Strimzi: usare operatore e immagini della stessa versione (>= 0.46 per Kafka 4, solo KRaft + KafkaNodePool).
   Le immagini 0.32.0-kafka-3.3.1 fissate nella v8 non sono compatibili con "latest".
 - ksqlDB, Spring Cloud Stream, Flink: non toccati dalla migrazione, non riprovati.
+
+
+=== EXACTLY ONCE: I TRE CASI (collaudato su apache/kafka:4.1.0, singolo nodo)
+# Sorgenti: kafka-basics/src/main/java/kafka/exactlyonce/
+# Idea: 1 producer + 1 topic + 1 consumer NON e' exactly-once per default.
+#   Caso 1: at-least-once (duplicati lato consumer)   Caso 2: producer idempotente   Caso 3: transazioni
+sudo docker compose -f docker-compose-kraft-single.yml up -d
+sleep 20   # attendere il broker: se un consumer stampa a raffica NotCoordinatorException, aspettare e rilanciare
+cd kafka-basics && mvn clean package && cd ..
+J=kafka-basics/target/kafka-basics-jar-with-dependencies.jar
+K="sudo docker exec kafka /opt/kafka/bin"
+for t in eo-input eo-output eo-tx eo-idempotent-true eo-idempotent-false; do $K/kafka-topics.sh --create --topic $t --bootstrap-server localhost:9092; done
+
+# ---------- CASO 1: AT-LEAST-ONCE (elaborazione e commit dell'offset sono due passi separati)
+printf 'm1\nm2\nm3\n' | sudo docker exec -i kafka /opt/kafka/bin/kafka-console-producer.sh --topic eo-input --bootstrap-server localhost:9092
+java -cp $J kafka.exactlyonce.AtLeastOnceConsumerDemo crash    # elabora m1 m2 m3, "crash" prima del commit
+java -cp $J kafka.exactlyonce.AtLeastOnceConsumerDemo crash    # DUPLICATI: rielabora m1 m2 m3
+java -cp $J kafka.exactlyonce.AtLeastOnceConsumerDemo commit   # rielabora ancora una volta, poi committa
+java -cp $J kafka.exactlyonce.AtLeastOnceConsumerDemo commit   # niente: l'offset e' avanzato
+$K/kafka-consumer-groups.sh --describe --group eo-at-least-once --bootstrap-server localhost:9092
+# Messaggio: i messaggi sono arrivati 3 volte al "sistema esterno" (DB, REST...). Serve un consumer idempotente.
+
+# ---------- CASO 2: PRODUCER IDEMPOTENTE (niente duplicati da retry del producer)
+java -cp $J kafka.exactlyonce.IdempotentProducerDemo true      # default da Kafka 3.0
+java -cp $J kafka.exactlyonce.IdempotentProducerDemo false
+# Guardare il log del broker: con idempotenza i batch hanno producerId e numero di sequenza, il broker scarta i retry
+for v in true false; do
+  echo "== idempotence=$v"
+  sudo docker exec kafka sh -c "/opt/kafka/bin/kafka-dump-log.sh --files /tmp/kraft-combined-logs/eo-idempotent-$v-0/00000000000000000000.log | grep -oE 'baseOffset: [0-9]+|baseSequence: -?[0-9]+|producerId: -?[0-9]+' | paste -sd' '"
+done
+# true  -> baseOffset: 0 baseSequence: 0 producerId: 1
+# false -> baseOffset: 0 baseSequence: -1 producerId: -1
+# (garanzia valida per partizione e per la vita del producer: se si riavvia ottiene un nuovo producerId)
+
+# ---------- CASO 3: TRANSAZIONI (exactly-once dentro Kafka)
+# 3a) una transazione committata (3 msg) e una abortita (3 msg) sullo stesso topic
+java -cp $J kafka.exactlyonce.TransactionalProducerDemo
+java -cp $J kafka.exactlyonce.ReadCommittedConsumerDemo eo-tx read_committed     # 3 messaggi: "committed 0..2"
+java -cp $J kafka.exactlyonce.ReadCommittedConsumerDemo eo-tx read_uncommitted   # 6 messaggi: anche "aborted 0..2"
+# Con la console (read_committed e' ESPLICITO, il default dei consumer e' read_uncommitted):
+$K/kafka-console-consumer.sh --topic eo-tx --from-beginning --bootstrap-server localhost:9092 --isolation-level read_committed --timeout-ms 15000
+# NOTA: nel producer prima di abortTransaction() serve flush(), altrimenti i record nel buffer vengono scartati
+#       e non arrivano nemmeno al broker.
+
+# 3b) consume-transform-produce exactly-once: input -> maiuscolo -> output, offset committati NELLA STESSA transazione
+java -cp $J kafka.exactlyonce.ExactlyOnceProcessorDemo abort    # scrive M1 M2 M3 su eo-output ma annulla: offset non avanza
+java -cp $J kafka.exactlyonce.ExactlyOnceProcessorDemo commit   # rielabora e committa output + offset insieme
+java -cp $J kafka.exactlyonce.ExactlyOnceProcessorDemo commit   # niente da fare: offset gia' a 3
+java -cp $J kafka.exactlyonce.ReadCommittedConsumerDemo eo-output read_committed     # M1 M2 M3 UNA volta sola
+java -cp $J kafka.exactlyonce.ReadCommittedConsumerDemo eo-output read_uncommitted   # 6 messaggi: i 3 annullati + i 3 validi
+$K/kafka-consumer-groups.sh --describe --group eo-processor --bootstrap-server localhost:9092   # CURRENT-OFFSET 3, LAG 0
+# Kafka Streams fa tutto questo con processing.guarantee=exactly_once_v2
+
+# ---------- LIMITE: l'exactly-once vale SOLO dentro Kafka (topic -> topic).
+# Se il consumer scrive su un DB / chiama un'API, Kafka non annulla l'effetto: rendere l'operazione idempotente
+# (upsert con chiave univoca = id del messaggio) o salvare l'offset nella stessa transazione del DB.
+
+sudo docker compose -f docker-compose-kraft-single.yml down -v
