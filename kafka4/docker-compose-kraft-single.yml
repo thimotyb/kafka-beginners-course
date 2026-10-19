@@ -1,0 +1,7 @@
+# Kafka 4 singolo nodo (KRaft combined), accessibile su localhost:9092
+services:
+  kafka:
+    image: apache/kafka:${KAFKA_VERSION:-4.1.0}
+    container_name: kafka
+    ports:
+      - "9092:9092"
