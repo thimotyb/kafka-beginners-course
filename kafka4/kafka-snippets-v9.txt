@@ -864,6 +864,21 @@ java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ProducerD
 
 # Default cambiati dalla 3.0 in poi: acks=all e enable.idempotence=true (il client 2.4.1 usa ancora acks=1)
 # NOVITA': nuovo protocollo di rebalance (KIP-848), group.protocol=consumer
+# --- Nuovo protocollo consumer group (KIP-848), GA in Kafka 4.0 ---
+# Classic: il consumer "leader" del gruppo calcola l'assegnazione; a ogni ingresso/uscita di un membro tutti
+#   rilasciano le partizioni e rifanno JoinGroup/SyncGroup (rebalance "stop the world").
+# Nuovo: il group coordinator sul broker calcola l'assegnazione, nessun consumer leader e nessuna barriera
+#   globale; il rebalance e' incrementale (un consumer perde solo le partizioni che gli vengono tolte).
+#   Un solo heartbeat verso il coordinatore, che risponde con l'assegnazione.
+#   session.timeout / heartbeat e strategia (uniform o range) si configurano lato broker/gruppo
+#   (group.consumer.*), non piu' lato client (partition.assignment.strategy non si usa).
+#   Si attiva lato client con group.protocol=consumer (default: classic).
+# ConsumerDemoNewProtocol: e' ConsumerDemo con in piu' group.protocol=consumer; si sottoscrive a first_topic
+#   e stampa i messaggi. Dimostra che il protocollo si abilita con una sola proprieta' e che il gruppo e'
+#   davvero sul nuovo protocollo (describe --state: ASSIGNMENT-STRATEGY uniform, tipo Consumer).
+#   NON mostra da sola il vantaggio (nessun blocco durante il rebalance): testato un solo consumer.
+#   Per vederlo: avviare due consumer sullo stesso group.id (uno con classic, uno con consumer) e confrontare
+#   i log: nel classic compaiono "Revoke previously assigned partitions" e "Join group" per tutti i membri.
 mvn clean package
 java -cp target/kafka-basics-jar-with-dependencies.jar kafka.tutorial1.ConsumerDemoNewProtocol
 sudo docker exec kafka1 /opt/kafka/bin/kafka-consumer-groups.sh --list --type consumer --state --bootstrap-server kafka1:19092
