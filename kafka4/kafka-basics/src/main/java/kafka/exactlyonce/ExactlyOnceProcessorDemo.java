@@ -72,7 +72,11 @@ public class ExactlyOnceProcessorDemo {
             for (ConsumerRecord<String, String> record : records) {
                 // 2) "transform" + "produce": scrive il risultato sul topic di output (ancora invisibile ai read_committed)
                 producer.send(new ProducerRecord<String, String>("eo-output", record.key(), record.value().toUpperCase()));
-                // l'offset da committare e' quello del prossimo messaggio da leggere
+                // prepara il "segnalibro" del consumer (quello che farebbe consumer.commitSync()): per ogni partizione
+                // la posizione da cui riprendere a leggere; la mappa viene sovrascritta a ogni record, quindi alla fine
+                // contiene l'ultimo record letto per partizione (un poll puo' contenere record di piu' partizioni).
+                // + 1 perche' l'offset committato e' quello del PROSSIMO messaggio da leggere: senza, alla ripartenza
+                // si rileggerebbe l'ultimo messaggio gia' elaborato.
                 offsets.put(new TopicPartition(record.topic(), record.partition()), new OffsetAndMetadata(record.offset() + 1));
             }
 
@@ -83,7 +87,9 @@ public class ExactlyOnceProcessorDemo {
                 logger.info("ABORT: " + records.count() + " messaggi scritti in output ma annullati, offset NON committati");
                 break;
             }
-            // 3) aggiunge alla stessa transazione gli offset del consumer (al posto di consumer.commitSync())
+            // 3) aggiunge alla stessa transazione gli offset del consumer (al posto di consumer.commitSync()):
+            //    il segnalibro e i messaggi su eo-output diventano visibili insieme, oppure spariscono insieme (abort/guasto).
+            //    Cosi' non esistono ne' "output scritto ma offset non avanzato" (duplicati) ne' "offset avanzato ma output perso"
             producer.sendOffsetsToTransaction(offsets, consumer.groupMetadata());
             // 4) commit: output e offset diventano visibili insieme, oppure (abort/guasto) nessuno dei due
             producer.commitTransaction();
