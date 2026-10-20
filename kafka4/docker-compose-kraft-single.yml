@@ -1,4 +1,6 @@
 # Kafka 4 singolo nodo (KRaft combined), accessibile su localhost:9092
+# Usare version per usare docker-compose anziché docker compose come plugin di docker
+# version: '2.4'
 services:
   kafka:
     image: apache/kafka:${KAFKA_VERSION:-4.1.0}
