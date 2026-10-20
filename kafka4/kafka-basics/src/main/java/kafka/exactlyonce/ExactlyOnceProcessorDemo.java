@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * CASO 3c - Consume-transform-produce exactly-once: legge da eo-input, scrive in maiuscolo su eo-output
+ * CASO 3b - Consume-transform-produce exactly-once: legge da eo-input, scrive in maiuscolo su eo-output
  * e salva gli offset del consumer NELLA STESSA transazione dell'output.
  * Argomento "abort":  scrive l'output ma annulla la transazione (simula un guasto) -> output e offset si annullano insieme.
  * Argomento "commit": committa -> output e offset vengono resi visibili insieme.

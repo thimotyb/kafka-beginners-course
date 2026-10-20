@@ -1017,7 +1017,7 @@ done
 # (garanzia valida per partizione e per la vita del producer: se si riavvia ottiene un nuovo producerId)
 
 # ---------- CASO 3: TRANSAZIONI (exactly-once dentro Kafka)
-# 3a) una transazione committata (3 msg) e una abortita (3 msg) sullo stesso topic
+# 3a) una transazione committata (3 msg) e una abortita (3 msg) sullo stesso topic  (la lettura con ReadCommittedConsumerDemo fa parte di 3a)
 java -cp $J kafka.exactlyonce.TransactionalProducerDemo
 java -cp $J kafka.exactlyonce.ReadCommittedConsumerDemo eo-tx read_committed     # 3 messaggi: "committed 0..2"
 java -cp $J kafka.exactlyonce.ReadCommittedConsumerDemo eo-tx read_uncommitted   # 6 messaggi: anche "aborted 0..2"
@@ -1027,6 +1027,7 @@ $K/kafka-console-consumer.sh --topic eo-tx --from-beginning --bootstrap-server l
 #       e non arrivano nemmeno al broker.
 
 # 3b) consume-transform-produce exactly-once: input -> maiuscolo -> output, offset committati NELLA STESSA transazione
+# (l'input m1 m2 m3 e' gia' su eo-input: l'ha messo la printf del CASO 1; questa demo non produce input, lo rilegge con un consumer group suo)
 java -cp $J kafka.exactlyonce.ExactlyOnceProcessorDemo abort    # scrive M1 M2 M3 su eo-output ma annulla: offset non avanza
 java -cp $J kafka.exactlyonce.ExactlyOnceProcessorDemo commit   # rielabora e committa output + offset insieme
 java -cp $J kafka.exactlyonce.ExactlyOnceProcessorDemo commit   # niente da fare: offset gia' a 3

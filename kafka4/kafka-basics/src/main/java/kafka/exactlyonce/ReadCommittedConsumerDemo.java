@@ -14,7 +14,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 /**
- * CASO 3b - Legge un topic dall'inizio con l'isolation level scelto.
+ * CASO 3a (lettura) - Legge un topic dall'inizio con l'isolation level scelto.
  * Uso: ReadCommittedConsumerDemo <topic> <read_committed|read_uncommitted>
  */
 public class ReadCommittedConsumerDemo {
