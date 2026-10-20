@@ -32,7 +32,18 @@ public class ConsumerDemoNewProtocol {
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        // la novita' di Kafka 4
+        // la novita' di Kafka 4: sceglie QUALE protocollo usa il consumer per partecipare al gruppo.
+        //  - "classic" (default): JoinGroup/SyncGroup. Un consumer del gruppo, il "group leader", calcola
+        //    l'assegnazione delle partizioni LATO CLIENT. A ogni ingresso/uscita di un membro scatta un rebalance con una
+        //    barriera globale: tutti i consumer si fermano e restituiscono le partizioni (eager, "stop the world"),
+        //    anche quelle che non cambierebbero proprietario, e riprendono solo dopo la nuova assegnazione.
+        //  - "consumer" (KIP-848): i membri parlano solo col group coordinator sul broker con heartbeat
+        //    (ConsumerGroupHeartbeat) e l'assegnazione la calcola il BROKER, in modo incrementale. Ogni consumer
+        //    riceve solo le variazioni che lo riguardano: cede le partizioni che passano ad altri e prende le nuove,
+        //    senza fermare gli altri e senza barriera di gruppo. Risultato: rebalance piu' rapidi e meno pause di
+        //    consumo nei gruppi grandi o con ingressi/uscite frequenti.
+        // Il flag e' solo lato client, ma serve un broker Kafka 4 (nuovo group coordinator). Con "consumer"
+        // partition.assignment.strategy e' ignorata: l'assegnatore e' una scelta del broker/gruppo (uniform o range).
         properties.setProperty(ConsumerConfig.GROUP_PROTOCOL_CONFIG, "consumer");
 
         // il resto del codice e' identico a ConsumerDemo: cambia solo chi decide l'assegnazione delle partizioni (il broker)
