@@ -999,7 +999,15 @@ $K/kafka-consumer-groups.sh --describe --group eo-at-least-once --bootstrap-serv
 # ---------- CASO 2: PRODUCER IDEMPOTENTE (niente duplicati da retry del producer)
 java -cp $J kafka.exactlyonce.IdempotentProducerDemo true      # default da Kafka 3.0
 java -cp $J kafka.exactlyonce.IdempotentProducerDemo false
-# Guardare il log del broker: con idempotenza i batch hanno producerId e numero di sequenza, il broker scarta i retry
+# Senza guasti le due esecuzioni sono identiche (100 messaggi, uno al secondo). Per vedere l'effetto dell'idempotenza
+# serve provocare un retry: mentre il producer e' in esecuzione, da un altro terminale
+#   sudo docker pause kafka ; sleep 8 ; sudo docker unpause kafka
+# (pause e' il modo affidabile: il broker riceve la richiesta, la scrive, ma la risposta arriva dopo il timeout di 5s
+#  e va persa; con "docker stop/start" il batch spesso non viene scritto e il duplicato non si forma)
+# Nel log del producer compare "FALLIMENTO + RETRY". Poi confrontare il numero di messaggi nei due topic:
+$K/kafka-get-offsets.sh --topic eo-idempotent-true --bootstrap-server localhost:9092    # 100
+$K/kafka-get-offsets.sh --topic eo-idempotent-false --bootstrap-server localhost:9092   # >100 se il retry ha duplicato
+# Il log del broker mostra solo che i batch con idempotenza portano producerId e numero di sequenza (il broker usa quelli per scartare i duplicati)
 for v in true false; do
   echo "== idempotence=$v"
   sudo docker exec kafka sh -c "/opt/kafka/bin/kafka-dump-log.sh --files /tmp/kraft-combined-logs/eo-idempotent-$v-0/00000000000000000000.log | grep -oE 'baseOffset: [0-9]+|baseSequence: -?[0-9]+|producerId: -?[0-9]+' | paste -sd' '"
